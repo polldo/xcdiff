@@ -46,6 +46,18 @@ func run(f1name string, f2name string, out string) error {
 	fOut := excelize.NewFile()
 	fOut.NewSheet(sheet)
 
+	ds := &excelize.Style{Fill: excelize.Fill{Type: "pattern", Color: []string{"E0EBF5"}, Pattern: 1}}
+	diffStyle, err := fOut.NewStyle(ds)
+	if err != nil {
+		return err
+	}
+
+	es := &excelize.Style{}
+	eqStyle, err := fOut.NewStyle(es)
+	if err != nil {
+		return err
+	}
+
 	maxRows := len(rows1)
 	if len(rows2) > maxRows {
 		maxRows = len(rows2)
@@ -76,15 +88,27 @@ func run(f1name string, f2name string, out string) error {
 				val2 = row2[j]
 			}
 
+			style := eqStyle
 			var cellValue string
 			if val1 == val2 {
 				cellValue = val1
 			} else {
 				cellValue = val1 + " => " + val2
+				style = diffStyle
 			}
 
-			cellName, _ := excelize.CoordinatesToCellName(j+1, i+1)
-			fOut.SetCellValue(sheet, cellName, cellValue)
+			cellName, err := excelize.CoordinatesToCellName(j+1, i+1)
+			if err != nil {
+				return err
+			}
+
+			if err := fOut.SetCellValue(sheet, cellName, cellValue); err != nil {
+				return err
+			}
+
+			if err := fOut.SetCellStyle(sheet, cellName, cellName, style); err != nil {
+				return err
+			}
 		}
 	}
 
